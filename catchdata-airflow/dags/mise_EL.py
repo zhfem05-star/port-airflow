@@ -1,4 +1,4 @@
-# dags/load_air_quality_to_snowflake.py
+"""snowflake에 대기질 데이터 적재 DAG"""
 import logging
 import time
 from datetime import datetime, timedelta
