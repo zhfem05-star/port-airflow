@@ -1,12 +1,13 @@
 # dags/load_air_quality_to_snowflake.py
+import logging
+import time
+from datetime import datetime, timedelta
+
+import requests
 from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from datetime import datetime, timedelta
-import requests
-import time
-import logging
 
 KR_ISO_CODES = {
     '서울': 'KR-11',
@@ -135,7 +136,7 @@ def load_to_snowflake(**context):
         if value in (None, '', '-', 'null', '통신장애'):
             return None
         return value
-    
+
     # Snowflake Hook 생성
     hook = SnowflakeHook(snowflake_conn_id='snowflake')
 
@@ -143,7 +144,7 @@ def load_to_snowflake(**context):
     failed = 0
 
     logger.info("데이터 적재 시작...")
-    logger.debug(f"Snowflake 연결: snowflake_conn_id='snowflake'")
+    logger.debug("Snowflake 연결: snowflake_conn_id='snowflake'")
 
     for item in all_data:
         try:
@@ -192,7 +193,7 @@ def load_to_snowflake(**context):
                 station_name,
                 data_time
             ))
-            
+
 
             # 2) 새 데이터 삽입
             hook.run("""
@@ -221,38 +222,38 @@ def load_to_snowflake(**context):
             """, parameters=(
                 station_name,
                 sido_name,
-                data_time,     
-                
-                khai_value,    
-                khai_grade,    
-                
-                pm10_value,    
-                pm10_grade,    
-                pm10_flag,     
-                
-                pm25_value,    
-                pm25_grade,    
-                pm25_flag,     
-                
-                o3_value,      
-                o3_grade,      
-                o3_flag,       
-                
-                no2_value,     
-                no2_grade,     
-                no2_flag,      
-                
-                co_value,      
-                co_grade,      
-                co_flag,       
-                
-                so2_value,     
-                so2_grade,     
-                so2_flag,      
-            
+                data_time,
+
+                khai_value,
+                khai_grade,
+
+                pm10_value,
+                pm10_grade,
+                pm10_flag,
+
+                pm25_value,
+                pm25_grade,
+                pm25_flag,
+
+                o3_value,
+                o3_grade,
+                o3_flag,
+
+                no2_value,
+                no2_grade,
+                no2_flag,
+
+                co_value,
+                co_grade,
+                co_flag,
+
+                so2_value,
+                so2_grade,
+                so2_flag,
+
                 KR_ISO_CODES.get(item.get('sidoName'), None)
             ))
-            
+
             success += 1
 
             if success % 100 == 0:
@@ -334,7 +335,7 @@ def validate_data(**context):
     logger.debug("실제 데이터가 있는 지역:")
     for sido, count in sorted(actual_regions.items()):
         logger.debug(f"  {sido}: {count}개")
-    
+
     # 2. 검증
     logger.info("=" * 70)
     logger.info("검증 결과")
@@ -412,13 +413,13 @@ with DAG(
         'retry_delay': timedelta(minutes=5),
     }
 ) as dag:
-    
+
     # Task 1: Extract
     extract_task = PythonOperator(
         task_id='extract',
         python_callable=extract_air_quality_data
     )
-    
+
     # Task 2: Load
     load_task = PythonOperator(
         task_id='load',
