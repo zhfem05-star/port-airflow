@@ -10,6 +10,7 @@ from airflow import DAG
 from airflow.models import Variable
 from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
+from plugin.slack_alert import send_slack_alert
 
 KR_ISO_CODES = {
     "서울": "KR-11",
@@ -188,6 +189,7 @@ with DAG(
         "depends_on_past": False,
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
+        "on_failure_callback": send_slack_alert,  # 실패 시 Slack 알림
     },
     description="대기질 데이터를 S3에 Parquet 형식으로 적재하는 DAG",
     schedule="0 6 * * *",  # 매일 6시에 실행

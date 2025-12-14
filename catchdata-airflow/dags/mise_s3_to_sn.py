@@ -10,6 +10,7 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.sensors.external_task import ExternalTaskSensor
+from plugin.slack_alert import send_slack_alert
 
 
 def get_snowflake_connection():
@@ -80,6 +81,7 @@ with DAG(
         "depends_on_past": False,
         "retries": 1,
         "retry_delay": timedelta(minutes=5),
+        "on_failure_callback": send_slack_alert,  # 실패 시 Slack 알림
     },
     description="S3에서 Snowflake로 대기질 데이터를 적재하는 DAG",
     schedule="0 6 * * *",  # mise_data_to_s3와 동일한 스케줄
